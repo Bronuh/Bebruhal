@@ -165,7 +165,9 @@ namespace Bebruhal.Systems
 			var msg = new Message
 			{
 				Author = BebrUser.ConsoleUser,
-				Text = context.Core.GetPrefix() + cmd
+				Text = context.Core.GetPrefix() + cmd,
+				Module = Bebruhal.CoreModule,
+				Source = Bebruhal.CoreModule.Id
 			};
 
 			await TryExecute(msg);

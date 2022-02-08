@@ -12,5 +12,8 @@ namespace Discord_Module.Types
 	{
 		[Option(DefaultValue = "")]
 		public string Token { get; set; }
+
+		[Option(DefaultValue = false)]
+		public bool PreregistrateUsers { get; set; }
 	}
 }

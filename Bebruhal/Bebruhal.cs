@@ -17,6 +17,11 @@ public class Bebruhal
 	static Logger logger = LogManager.GetCurrentClassLogger();
 
 	/// <summary>
+	/// Базовый модуль, отвечающий за обработку команд и сообщений внутри ядра
+	/// </summary>
+	public static CoreModule CoreModule { get; private set; } = new();
+
+	/// <summary>
 	/// Точка входа в программу
 	/// </summary>
 	/// <param name="args"></param>
@@ -39,7 +44,10 @@ public class Bebruhal
 		while (running)
 		{
 			var str = Console.ReadLine();
-			core.CommandsManager.TryExecuteConsoleCommand(str).GetAwaiter().GetResult();
+			if (running)
+			{
+				core.CommandsManager.TryExecuteConsoleCommand(str ?? "").GetAwaiter().GetResult();
+			}
 		}
 	}
 
@@ -52,10 +60,15 @@ public class Bebruhal
 		return core;
 	}
 
+	/// <summary>
+	/// Сохраняет текущую сессию и завершает работу бота
+	/// </summary>
 	public static void ShutDown()
 	{
 		running = false;
 		core.Session.Save();
+		core.PluginsManager.SaveAll();
+		core.ModulesManager.SaveAll();
 	}
 
 	/// <summary>
@@ -70,7 +83,7 @@ public class Bebruhal
 		logger.Info("Пересохранение файла конфигурации");
 		Type type = config.GetType();
 
-		/// Попытка присвоить всем свойствам конфига их же значения, чтобы все они отразились в создаваемом файле конфигурации.
+		// Попытка присвоить всем свойствам конфига их же значения, чтобы все они отразились в создаваемом файле конфигурации.
 		foreach (var property in type.GetProperties())
 		{
 			try

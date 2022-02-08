@@ -129,7 +129,7 @@ namespace Bebruhal
 		/// Вызывается модулями для передачи информации о полученном сообщении в бота. Считывается плагинами и
 		/// менеджером команд для обработки.
 		/// </summary>
-		public event AsyncEventHandler<IModule, RecievedMessageEventArgs> RecievedMessage;
+		public event AsyncEventHandler<IModule?, RecievedMessageEventArgs> RecievedMessage;
 
 		
 	}

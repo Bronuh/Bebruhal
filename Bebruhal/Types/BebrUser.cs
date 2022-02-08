@@ -9,18 +9,24 @@
 		/// <summary>
 		/// Экземпляр класса, необходимый для возврата вместо null
 		/// </summary>
-		public static BebrUser Empty { get; } = new BebrUser();
+		public static BebrUser Empty { get; } = new BebrUser() { ExternalId = "empty",  isEmpty = true, Name = "empty"};
 
 		/// <summary>
 		/// Пользователь, от чьего имени должны выполнятся консольные команды
 		/// </summary>
-		public static BebrUser ConsoleUser { get; } = new BebrUser { isAdmin = true, isConsole = true, ExternalId = "Console" };
+		public static BebrUser ConsoleUser { get; } = new BebrUser { isAdmin = true, isConsole = true, Name = "Console", ExternalId = "-1", Id = -1 };
 
 		/// <summary>
 		/// Имя пользователя. Указывается при возможности модулем во время регистрации
 		/// </summary>
 		[JsonProperty]
 		public string? Name { get; set; } = null;
+
+		/// <summary>
+		/// Дополнительная информациия о пользователе
+		/// </summary>
+		[JsonProperty]
+		public string About { get; internal set; } = "Пользователь не указал дополнительной информации о себе";
 
 		/// <summary>
 		/// Внешний идентификатор пользователя
@@ -74,6 +80,8 @@
 		[JsonProperty]
 		internal CompoundProperty properties = new();
 
+
+		private bool isEmpty = false;
 		/// <summary>
 		/// Пустой конструктор
 		/// </summary>
@@ -81,7 +89,7 @@
 
 		internal BebrUser(IModule source, int groupId) 
 		{
-			Source = source.GetType().Name;
+			Source = source.Id;
 			Rank = groupId;
 			RegistrationTime = DateTimeOffset.Now.ToUnixTimeMilliseconds();
 			properties = new CompoundProperty("main");
@@ -103,6 +111,15 @@
 		public void SetConsole(bool isConsole)
 		{
 			this.isConsole = isConsole;
+		}
+
+		/// <summary>
+		/// Дает пользователю права администратора
+		/// </summary>
+		/// <param name="isAdmin"></param>
+		public void SetOp(bool isAdmin)
+		{
+			this.isAdmin = isAdmin;
 		}
 
 		/// <summary>
@@ -142,7 +159,7 @@
 		/// <returns></returns>
 		public bool IsEmpty()
 		{
-			return this == Empty;
+			return isEmpty;
 		}
 
 		/// <summary>
@@ -201,29 +218,31 @@
 		/// <returns>true, если найдено совпадение хотя бы в одном изпроверяемых свойств</returns>
 		public bool CheckUser(string text)
 		{
+			var key = text.ToLower();
 
-			if (text.ToLower() == ExternalId?.ToLower())
+			if (key == ExternalId?.ToLower())
 			{
 				return true;
 			}
-			else if (text.ToLower() == GUID?.ToLower())
+			else if (key == GUID?.ToLower())
 			{
 				return true;
 			}
-			else if (text.ToLower() == Name?.ToLower())
+			else if (key.Length>2)
 			{
-				return true;
+				try { if (Name.ToLower().Contains(key)) return true; } catch { }
+				
 			}
 			else
 			{
-
 				LoggerProxy.Debug("Имя пользователя не найдено, поиск псевдонимов");
 				foreach (string alias in aliases)
 				{
 					LoggerProxy.Debug("Псевдоним: " + alias);
-					if (text.ToLower() == alias.ToLower())
+					if (key.Length > 2)
 					{
-						return true;
+						try { if (alias.ToLower().Contains(key)) return true; } catch { }
+
 					}
 				}
 			}
@@ -244,6 +263,22 @@
 			{
 				Logger.Warn($"Не удалось удалить тег: {ex}");
 			}
+		}
+
+		/// <summary>
+		/// Пытается удалить указанный ключ из списка псевдонимов
+		/// </summary>
+		/// <param name="key">искомый псевдоним</param>
+		public void RemoveAlias(string key)
+		{
+			string found = null;
+			foreach(var alias in aliases)
+			{
+				if (alias.ToLower().Equals(key)) found = alias;
+				break;
+			}
+			if(found != null)
+				aliases.Remove(found);
 		}
 
 

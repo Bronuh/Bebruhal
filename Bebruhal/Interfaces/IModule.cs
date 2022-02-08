@@ -70,11 +70,21 @@ namespace Bebruhal.Interfaces
 		public void PostInit(BotContext context);
 
 		/// <summary>
+		/// Производит сохранение данных
+		/// </summary>
+		public void Save();
+
+		/// <summary>
 		/// Отпрявляет сообщение в реализуемый сервис
 		/// </summary>
 		/// <param name="msg">Отправляемое сообщение</param>
 		/// <param name="address">Адрес назначения</param>
 		public void SendMessage(Message msg, string address);
 
+		/// <summary>
+		/// Отправляет широковещательное сообщение по всем допустимым адресам
+		/// </summary>
+		/// <param name="message">Отправляемое сообщение</param>
+		public void Broadcast(Message message);
 	}
 }

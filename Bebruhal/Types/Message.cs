@@ -25,12 +25,12 @@
 		/// <summary>
 		/// Изображения, прикреплённые к сообщению
 		/// </summary>
-		public List<Image> Images { get; set; }
+		public List<Image> Images { get; set; } = new();
 
 		/// <summary>
 		/// Файлы, прикреплённые к сообщению
 		/// </summary>
-		public List<Base64File> Files { get; set; }
+		public List<Base64File> Files { get; set; } = new();
 
 		/// <summary>
 		/// Модуль, в котором было сформировано сообщение
@@ -113,7 +113,7 @@
 		{
 			var text = Text;
 			var len = text.Split(' ').First().Length;
-			return text.Substring(len, text.Length - len);
+			return text.Substring(len, text.Length - len).Trim();
 		}
 
 		/// <summary>

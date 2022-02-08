@@ -39,8 +39,19 @@ namespace Bebruhal.Types
 
 		private Dictionary<string, BebrUser> _guidUsers = new();
 		private Dictionary<string, BebrUser> _nameUsers = new();
+		private Dictionary<string, BebrUser> _idUsers = new();
 
-		
+		private void CacheUser(BebrUser user)
+		{
+			try{_guidUsers.Add(user.GUID,user);}catch (Exception) { }
+			try { _nameUsers.Add(user.Name.ToLower(), user); } catch (Exception) { }
+			try { _idUsers.Add(user.ExternalId.ToLower(), user); } catch (Exception) { }
+			foreach (var alias in user.GetAliases())
+			{
+				_nameUsers.Add(alias.ToLower(), user);
+			}
+		}
+
 		/// <summary>
 		/// Пустой конструктор
 		/// </summary>
@@ -147,30 +158,7 @@ namespace Bebruhal.Types
 					if (user is not null)
 					{
 						Users.Add(user);
-						_guidUsers.Add(user.GUID, user);
-						if(user.Name != null)
-							try
-							{
-								_nameUsers.Add(user.Name.ToLower(), user);
-							}
-							catch (Exception ex)
-							{
-								Logger.Warn($"Не удалось добавить псевдоним '{user.Name.ToLower()}' пользователя '{user.Name ?? "<безымянный>"}':" +
-									$"\n{ex.Message}");
-							}
-
-						foreach (var alias in user.GetAliases())
-						{
-							try
-							{
-								_nameUsers.Add(alias.ToLower(), user);
-							}
-							catch (Exception ex)
-							{
-								Logger.Warn($"Не удалось добавить псевдоним '{alias.ToLower()}' пользователя '{user.Name?.ToLower() ?? "<безымянный>"}':" +
-									$"\n{ex.Message}");
-							}
-						}
+						CacheUser(user);
 						logger.Debug($"{file} успешно десериализован и добавлен в список пользователей");
 					}
 					else
@@ -185,12 +173,55 @@ namespace Bebruhal.Types
 			}
 		}
 
+		/// <summary>
+		/// Добавляет псевдонимы пользователю
+		/// </summary>
+		/// <param name="user">Пользователь, для которого регистрируются псевдонимы</param>
+		/// <param name="aliases">Список псевдонимов</param>
+		public void AddAliases(BebrUser user, params string[] aliases)
+		{
+			foreach (var alias in aliases)
+			{
+				try
+				{
+					_nameUsers.Add(alias.ToLower(),user);
+					user.AddAlias(alias);
+				}catch (Exception ex)
+				{
+					Logger.Warn($"Не удалось зарегистрировать псевдоним '{alias.ToLower()}':\n {ex.Message}");
+				}
+			}
+		}
 
-
+		/// <summary>
+		/// Добавляет псевдонимы пользователю
+		/// </summary>
+		/// <param name="user">Пользователь, для которого регистрируются псевдонимы</param>
+		/// <param name="aliases">Список псевдонимов</param>
+		public void RemoveAliases(params string[] aliases)
+		{
+			foreach (var alias in aliases)
+			{
+				var key = alias.ToLower();
+				try
+				{
+					var user = _nameUsers[key];
+					if (key != user.Name.ToLower())
+					{
+						_nameUsers.Remove(key);
+						user.RemoveAlias(key);
+					}
+				}
+				catch (Exception ex)
+				{
+					Logger.Warn($"Не удалось зарегистрировать псевдоним '{alias.ToLower()}':\n {ex.Message}");
+				}
+			}
+		}
 
 
 		/// <summary>
-		/// Регистрирует нового пользователя в сессии.
+		/// Регистрирует нового пользователя в сессии. Это очень медленный метод.
 		/// </summary>
 		/// <param name="name">Имя пользователя</param>
 		/// <param name="identifier">Внешний идентификатор пользователя</param>
@@ -200,7 +231,20 @@ namespace Bebruhal.Types
 		public BebrUser RegisterUser(string name, string identifier, IModule source, IEnumerable<string>? tags)
 		{
 			logger.Info("Попытка зарегистрировать нового пользователя...");
-			var user = BebrUser.Empty;
+
+			var user = GetUser(name);
+			if (!user.IsEmpty())
+			{
+				logger.Debug($"Пользователь {user.Name} уже зарегистрирован");
+				return user;
+			}
+
+			user = GetUser(identifier);
+			if (!user.IsEmpty())
+			{
+				logger.Debug($"Пользователь {user.ExternalId} уже зарегистрирован");
+				return user;
+			}
 
 			try
 			{
@@ -227,8 +271,7 @@ namespace Bebruhal.Types
 				if(tags != null)
 					user.AddTags(tags.ToArray());
 
-				_guidUsers.Add(user.GUID,user);
-				_nameUsers.Add(user.ExternalId.ToLower(), user);
+				CacheUser(user);
 
 				Users.Add(user);
 				usersCount++;
@@ -244,26 +287,34 @@ namespace Bebruhal.Types
 		/// </summary>
 		/// <param name="identifier">Строка для поиска - имя, псевдоним, id или GUID</param>
 		/// <returns>Найденный пользователь, либо BebrUser.Empty</returns>
-		public BebrUser GetUserByIdentifier(string identifier)
+		public BebrUser GetUser(string identifier)
 		{
 			var user = BebrUser.Empty;
-
+			var key = identifier.ToLower();
 			try
 			{
-				user = _nameUsers[identifier];
+				user = _nameUsers[key];
 			}
 			catch
 			{
-				Logger.Debug($"Не удалось найти в словаре пользователя по ключу '{identifier}'. Поиск будет продолжен перебором.");
+				Logger.Debug($"Не удалось найти в словаре пользователя по ключу '{identifier}'.");
 			}
-			if(user.IsEmpty())
-			foreach (var _user in Users)
+			try
 			{
-				if (user.CheckUser(identifier))
-				{
-					user = _user;
-				}
+				user = _idUsers[key];
 			}
+			catch
+			{
+				Logger.Debug($"Не удалось найти в словаре пользователя по Id '{identifier}'. Поиск будет продолжен перебором.");
+			}
+			if (user.IsEmpty())
+				foreach (var _user in Users)
+				{
+					if (_user.CheckUser(key))
+					{
+						user = _user;
+					}
+				}
 
 			return user;
 		}
@@ -277,6 +328,82 @@ namespace Bebruhal.Types
 			return Path.Combine(_sessionsDir, SessionInfo.SessionName);
 		}
 
+		/// <summary>
+		/// Возвращает относительный путь до директории с пользователями
+		/// </summary>
+		/// <returns></returns>
+		public string GetUsersDir()
+		{
+			return Path.Combine(GetPath(), _usersDir);
+		}
+
+		/// <summary>
+		/// Возвращает относительный путь до директории с медиа-контентом
+		/// </summary>
+		/// <returns></returns>
+		public string GetMediaDir()
+		{
+			return Path.Combine(GetPath(), _mediaDir);
+		}
+
+		/// <summary>
+		/// Возвращает относительный путь до директории с медиа-контентом для указанной сборки
+		/// </summary>
+		/// <param name="assembly">Сборка (плагин или модуль)</param>
+		/// <returns></returns>
+		public string GetMediaDir(IAssembly assembly)
+		{
+			var path = GetMediaDir();
+			if (assembly == null)
+			{
+				Logger.Warn($"В GetDataDir ередан пустой указатель на сборку");
+				return path;
+			}
+			if (assembly is IModule)
+			{
+				path = Path.Combine(path, "modules", assembly.Id);
+			}
+			if (assembly is IPlugin)
+			{
+				path = Path.Combine(path, "plugins", assembly.Id);
+			}
+
+			return path;
+		}
+
+		/// <summary>
+		/// Возвращает относительный путь до директории с данными плагинов и модулей
+		/// </summary>
+		/// <returns></returns>
+		public string GetDataDir()
+		{
+			return Path.Combine(GetPath(), _dataDir);
+		}
+
+		/// <summary>
+		/// Возвращает относительный путь до директории с данными указанной сборки
+		/// </summary>
+		/// <param name="assembly">Сборка (плагин или модуль)</param>
+		/// <returns></returns>
+		public string GetDataDir(IAssembly assembly)
+		{
+			var path = GetDataDir();
+			if (assembly == null)
+			{
+				Logger.Warn($"В GetDataDir ередан пустой указатель на сборку");
+				return path;
+			}
+			if (assembly is IModule)
+			{
+				path = Path.Combine(path,"modules",assembly.Id);
+			}
+			if (assembly is IPlugin)
+			{
+				path = Path.Combine(path, "plugins", assembly.Id);
+			}
+
+			return path;
+		}
 
 
 		/// <summary>

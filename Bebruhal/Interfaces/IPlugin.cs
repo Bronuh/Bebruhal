@@ -45,5 +45,10 @@ namespace Bebruhal.Interfaces
 		/// Дополнительные действия.
 		/// </summary>
 		public void PostInit(BotContext context);
+
+		/// <summary>
+		/// Производит сохранение данных
+		/// </summary>
+		public void Save();
 	}
 }

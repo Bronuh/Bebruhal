@@ -9,6 +9,9 @@ using System.Threading.Tasks;
 
 namespace Bebruhal.Systems
 {
+	/// <summary>
+	/// Реализует общий фасад для всех модулей. Отвечает за подключение модулей, отправку сообщений в модули и вызов нестандартных функций в модулях.
+	/// </summary>
 	public sealed class ModulesManager
 	{
 		private const string _modulesDir = "modules";
@@ -20,19 +23,32 @@ namespace Bebruhal.Systems
 		private static Logger Logger { get; set; } = LogManager.GetCurrentClassLogger();
 
 		// PUBLIC REGION //
-
+		/// <summary>
+		/// Создает новый экземпляр на основе указанного контекста
+		/// </summary>
+		/// <param name="context">Контекст работы бота</param>
 		public ModulesManager(BotContext context)
 		{
 			this.context = context;
 		}
 
+		/// <summary>
+		/// Возвращает список идентификаторов загруженных модулей
+		/// </summary>
+		/// <returns></returns>
 		public IEnumerable<string> GetModulesList()
 		{
 			foreach (var module in _modules)
 			{
-				yield return module.Name;
+				yield return module.Id;
 			}
 		}
+
+		/// <summary>
+		/// Возвращает список подключенных модулей
+		/// </summary>
+		/// <returns></returns>
+		public IEnumerable<IModule> GetModules() { return _modules; }
 
 		/// <summary>
 		/// Вызывает нестандартную функцию в указанном модуле
@@ -49,6 +65,10 @@ namespace Bebruhal.Systems
 				{
 					if (func.Id == functionId)
 					{
+						if (func == null || func.Run == null)
+						{
+							continue;
+						}
 						func.Run(args);
 					}
 				}
@@ -131,8 +151,21 @@ namespace Bebruhal.Systems
 			}
 		}
 
+		internal void Broadcast(Message message)
+		{
+			foreach (var module in _modules)
+			{
+				module.Broadcast(message);
+			}
+		}
 
-
+		internal void SaveAll()
+		{
+			foreach(var module in _modules)
+			{
+				module.Save();
+			}
+		}
 
 
 
@@ -142,13 +175,14 @@ namespace Bebruhal.Systems
 
 		private void ScanModules()
 		{
+			_modules.Add(Bebruhal.CoreModule);
 			foreach (var assembly in _assemblies)
 			{
 				foreach (Type type in assembly.GetTypes())
 				{
 					if (typeof(IModule).IsAssignableFrom(type))
 					{
-						IModule result = Activator.CreateInstance(type) as IModule;
+						IModule? result = Activator.CreateInstance(type) as IModule;
 						if (result != null)
 						{
 							_modules.Add(result);
@@ -162,8 +196,8 @@ namespace Bebruhal.Systems
 		private Assembly LoadModule(string path)
 		{
 			LoggerProxy.Log($"Загрузка сборки модуля {path}");
-			AssemblyLoadContext loadContext = AssemblyLoadContext.Default;//new ModuleLoadContext(path);
-			return loadContext.LoadFromAssemblyPath(Path.GetFullPath(path));//.LoadFromAssemblyName(new AssemblyName(Path.GetFileNameWithoutExtension(path)));
+			AssemblyLoadContext loadContext = AssemblyLoadContext.Default;
+			return loadContext.LoadFromAssemblyPath(Path.GetFullPath(path));
 		}
 
 		private void ScanDlls()

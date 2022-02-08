@@ -26,7 +26,7 @@ namespace Potracheno
 				{
 					msg.Respond(Wastificator.Wastificate(text));
 				}
-			}).AddAliases("wasted", "потрачено")
+			}).AddAliases("wasted", "потрачено", "потратить")
 			.SetDescription("Делает текст потраченым");
 
 
@@ -41,6 +41,11 @@ namespace Potracheno
 		public void PreInit(BotContext context)
 		{
 			
+		}
+
+		public void Save()
+		{
+
 		}
 	}
 }

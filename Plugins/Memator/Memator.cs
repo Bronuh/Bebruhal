@@ -33,5 +33,9 @@ namespace Memator
 			
 		}
 
+		public void Save()
+		{
+
+		}
 	}
 }

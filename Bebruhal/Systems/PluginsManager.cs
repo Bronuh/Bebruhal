@@ -60,9 +60,19 @@ namespace Bebruhal.Systems
 			}
 		}
 
+		internal void SaveAll()
+		{
+			foreach (var plugin in _plugins)
+			{
+				plugin.Save();
+			}
+		}
 
-
-
+		/// <summary>
+		/// Возвращает список загруженных плагинов
+		/// </summary>
+		/// <returns></returns>
+		public IEnumerable<IPlugin> GetPlugins() { return _plugins; }
 
 
 

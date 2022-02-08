@@ -25,6 +25,11 @@ namespace Echo_Module
 
 		public bool IsReady => true;
 
+		public void Broadcast(Message message)
+		{
+
+		}
+
 		public void Init(BotContext context)
 		{
 			LoggerProxy.Trace($"Инициализация {Name}");
@@ -52,6 +57,11 @@ namespace Echo_Module
 		}
 
 		public void PreInit(BotContext context)
+		{
+
+		}
+
+		public void Save()
 		{
 
 		}

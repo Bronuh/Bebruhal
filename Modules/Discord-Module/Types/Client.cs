@@ -126,6 +126,21 @@ namespace Discord_Module.Types
 			DiscordModule.Instance.Restart();
 		}
 
+		private static void PreregistrateUsers(IEnumerable<DiscordUser> users)
+		{
+			foreach(var user in users)
+			{
+				try
+				{
+					Session.RegisterUser(user.Username, user.Id.ToString(), DiscordModule.Instance, null);
+				}
+				catch (Exception ex)
+				{
+					Logger.Debug($"Не удалось зарегистрировать пользователя {user.Username}:\n{ex.Message}");
+				}
+			}
+		}
+
 		internal static async void SendMessage(Message msg, string address)
 		{
 			ulong target;
@@ -187,13 +202,20 @@ namespace Discord_Module.Types
 			
 		}
 
+
+
+
+
+
+
 		private static async Task OnMessageCreated(DiscordClient sender, MessageCreateEventArgs e)
 		{
-			BebrUser user = Session.GetUserByIdentifier(e.Message.Author.Id.ToString());
+			BebrUser user = Session.GetUser(e.Message.Author.Id.ToString());
 			if (user.IsEmpty())
 			{
+				Logger.Debug($"Не удалось найти пользователя по Id {e.Message.Author.Id.ToString()}. Попытка регистрации.");
 				user = Session.RegisterUser(e.Message.Author.Username, e.Message.Author.Id.ToString(), DiscordModule.Instance, null);
-				user.AddAliases(e.Author.Username);
+				Session.AddAliases(user, e.Author.Username);
 			}
 
 			Message msg = new Message();
@@ -238,6 +260,15 @@ namespace Discord_Module.Types
 						Channels.Add(channel.Id,channel);
 					}
 				}
+
+			if (Config.PreregistrateUsers)
+				await Task.Factory.StartNew(async () =>
+				{
+					foreach (var guild in CustomGuilds)
+					{
+						PreregistrateUsers(await guild.Source.GetAllMembersAsync());
+					}
+				});
 
 			foreach (var msg in messages)
 			{

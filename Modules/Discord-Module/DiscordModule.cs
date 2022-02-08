@@ -19,7 +19,7 @@ namespace Discord_Module
 
 		private Logger logger = LoggerProxy.Instance();
 
-		public string Id { get; } = "discord";
+		public string Id { get; } = "discord-module";
 
 		public string Name { get; } = "Discord Module";
 
@@ -82,6 +82,14 @@ namespace Discord_Module
 			Task.Factory.StartNew(()=>Client.SendMessage(msg,address));
 		}
 
+		public void Save()
+		{
 
+		}
+
+		public void Broadcast(Message message)
+		{
+
+		}
 	}
 }
