@@ -8,8 +8,8 @@ namespace Memator
 {
 	internal class MemeStorage
 	{
-		internal List<MemeData> memes = new List<MemeData>();
-		internal Dictionary<string, MemeData> dictionary = new Dictionary<string, MemeData>();
+		internal List<MemeData> memes = new();
+		internal Dictionary<string, MemeData> dictionary = new();
 
 
 	}

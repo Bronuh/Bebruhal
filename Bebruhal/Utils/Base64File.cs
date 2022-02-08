@@ -15,7 +15,12 @@
 		/// </summary>
 		public string Body { get; set; }
 
+		/// <summary>
+		/// Пустой конструктор
+		/// </summary>
+#pragma warning disable CS8618 // Поле, не допускающее значения NULL, должно содержать значение, отличное от NULL, при выходе из конструктора. Возможно, стоит объявить поле как допускающее значения NULL.
 		public Base64File() { }
+#pragma warning restore CS8618 // Поле, не допускающее значения NULL, должно содержать значение, отличное от NULL, при выходе из конструктора. Возможно, стоит объявить поле как допускающее значения NULL.
 
 		/// <summary>
 		/// Загружает файл по указанному пути, преобразуя его в Base64
@@ -32,6 +37,7 @@
 			catch (Exception e)
 			{
 				LoggerProxy.Error(e.Message);
+				throw;
 			}
 		}
 
@@ -85,6 +91,10 @@
 		}
 
 
+		/// <summary>
+		/// Возвращает поток байтов содержимого файла
+		/// </summary>
+		/// <returns></returns>
 		public Stream ToStream()
 		{
 			return ToByteArray().ToStream();
@@ -111,9 +121,11 @@
 		/// <returns></returns>
 		public static Base64File FromData(string fileName, string data)
 		{
-			var file = new Base64File();
-			file.Name = fileName;
-			file.Body = data;
+			var file = new Base64File
+			{
+				Name = fileName,
+				Body = data
+			};
 			return file;
 		}
 	}

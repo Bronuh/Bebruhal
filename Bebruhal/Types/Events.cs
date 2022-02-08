@@ -16,9 +16,14 @@ namespace Bebruhal.Types
 	/// <returns></returns>
 	public delegate Task AsyncEventHandler<in TSender, in TArgs>(TSender sender, TArgs e) where TArgs : AsyncEventArgs;
 
-
+	/// <summary>
+	/// Отличается от обычного EventArgs наличием поля Handled
+	/// </summary>
 	public class AsyncEventArgs : EventArgs
 	{
+		/// <summary>
+		/// Пустой конструктор
+		/// </summary>
 		public AsyncEventArgs() { }
 
 		/// <summary>
@@ -104,24 +109,33 @@ namespace Bebruhal.Types
 	}
 
 
+#pragma warning disable CS1591 // Отсутствует комментарий XML для открытого видимого типа или члена
 	public class MessageCreatedEventArgs : AsyncEventArgs
 	{
-		public Message Message;
+		public Message? Message;
 		public MessageCreatedEventArgs() { }
+
 		public MessageCreatedEventArgs(Message msg) { Message = msg; }
 	}
+
 	public class CommandCalledEventArgs : AsyncEventArgs
 	{
-		public Message Message;
+		public Message? Message;
 		public CommandCalledEventArgs() { }
 		public CommandCalledEventArgs(Message msg) { Message = msg;}
 	}
 	public class CommandExecutedEventArgs : AsyncEventArgs
 	{
-		public Message Message;
+		public Message? Message;
 		public CommandExecutedEventArgs() { }
 		public CommandExecutedEventArgs(Message message) { Message = message; }
 
 	}
-	public class CommandCancelledEventArgs : AsyncEventArgs { }
+	public class CommandCancelledEventArgs : AsyncEventArgs
+	{
+		public Message? Message;
+		public CommandCancelledEventArgs() { }
+		public CommandCancelledEventArgs(Message message) { Message = message; }
+	}
+#pragma warning restore CS1591 // Отсутствует комментарий XML для открытого видимого типа или члена
 }

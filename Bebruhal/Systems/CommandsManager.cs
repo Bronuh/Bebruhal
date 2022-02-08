@@ -7,27 +7,55 @@ namespace Bebruhal.Systems
 	/// </summary>
 	public sealed class CommandsManager
 	{
-		public event AsyncEventHandler<Command, CommandCalledEventArgs> CommandCalled;
-		public event AsyncEventHandler<Command, CommandExecutedEventArgs> CommandExecuted;
-		public event AsyncEventHandler<Command, CommandCancelledEventArgs> CommandCancelled;
+		/// <summary>
+		/// Вызывается когда команда найдена и пытается выполниться
+		/// </summary>
+		public event AsyncEventHandler<Command, CommandCalledEventArgs>? CommandCalled;
 
-		private List<Command> commands = new List<Command>();
-		private Dictionary<string,Command> aliasedCommands = new Dictionary<string,Command>();
+		/// <summary>
+		/// Вызывается, когда команда прошла все проверки доступа и вызывает метод действия
+		/// </summary>
+		public event AsyncEventHandler<Command, CommandExecutedEventArgs>? CommandExecuted;
+
+		/// <summary>
+		/// Вызывается, когда вызванная команда прерывает своё выполнение из-за отказа в доступе
+		/// </summary>
+		public event AsyncEventHandler<Command, CommandCancelledEventArgs>? CommandCancelled;
+
+		private List<Command> commands = new();
+		private Dictionary<string,Command> aliasedCommands = new();
 		private BotContext context;
 
 		private static Logger Logger { get; set; } = LogManager.GetCurrentClassLogger();
 
+		/// <summary>
+		/// Создает нового менеджера команд на основе контекста бота
+		/// </summary>
+		/// <param name="context">Текущий контекст бота</param>
 		public CommandsManager(BotContext context)
 		{
-			this.context = context;
+			this.context = context ?? throw new ArgumentNullException(nameof(context));
 		}
 
 		/// <summary>
 		/// Регистрирует команду с сохранением её в кэш быстрого доступа. Необходимо вызыать только после окончания инициализации команды.
 		/// </summary>
-		/// <param name="command"></param>
+		/// <param name="command">Объект команды</param>
+		/// <param name="source">Сборка-источник команды</param>
 		public void RegisterCommand(Command command, IAssembly? source)
 		{
+			if (command is null)
+			{
+				Logger.Warn($"Попытка зарегистрировать null-команду из источника {source?.Id}");
+				return;
+			}
+			if (command.Name == null || command.Name.Trim() == String.Empty)
+			{
+				Logger.Warn($"Попытка зарегистрировать команду без имени из источника {source?.Id}.\n" +
+					$"Содержащиеся в команде псевдонимы: {command.Aliases.ToLine()}");
+				return;
+			}
+
 			commands.Add(command);
 			RegisterAlias(command.Name, command);
 
@@ -64,11 +92,10 @@ namespace Bebruhal.Systems
 		/// Ищет команду по строке
 		/// </summary>
 		/// <param name="name">Сама команда</param>
-		/// <param name="action">Делегат действия</param>
 		/// <returns>Ссылка на добавленную команду</returns>
-		public Command FindCommand(string name)
+		public Command? FindCommand(string name)
 		{
-			Command command = null;
+			Command? command = null;
 
 			try
 			{
@@ -102,7 +129,7 @@ namespace Bebruhal.Systems
 			{
 				var text = msg.Text.Substring(context.Core.GetPrefix().Length, msg.Text.Length - (context.Core.GetPrefix().Length));
 				var cmdName = text.Split(' ')[0].ToLower();
-				Command cmd = null;
+				Command? cmd = null;
 
 				try
 				{
@@ -110,7 +137,7 @@ namespace Bebruhal.Systems
 				}
 				catch(Exception ex)
 				{
-					Logger.Warn($"Команда '{cmdName}' не найдена в словаре");
+					Logger.Warn($"Команда '{cmdName}' не найдена в словаре: \n{ex.Message}");
 				}
 				if(cmd==null)
 					LoggerProxy.Trace($"Поиск команды {cmdName} в списке (бронух, удали это дерьмо, пусть регистрируют команды как положено)");
@@ -135,14 +162,40 @@ namespace Bebruhal.Systems
 		/// <returns></returns>
 		public async Task TryExecuteConsoleCommand(string cmd)
 		{
-			var msg = new Message();
-			msg.Author = BebrUser.ConsoleUser;
-			msg.Text = context.Core.GetPrefix() + cmd;
+			var msg = new Message
+			{
+				Author = BebrUser.ConsoleUser,
+				Text = context.Core.GetPrefix() + cmd
+			};
 
 			await TryExecute(msg);
 		}
 
 
+		/// <summary>
+		/// Возвращает список всех зарегистрированных команд
+		/// </summary>
+		/// <returns>Список команд</returns>
+		public IReadOnlyList<Command> GetCommands()
+		{
+			return commands;
+		}
+
+		/// <summary>
+		/// Возвращает список команд, зарегистрированных от имени указанной сборки (плагина/модуля)
+		/// </summary>
+		/// <param name="assembly">Плагин или сборка, от имени которых должна быть зарегистрирована команда</param>
+		/// <returns>Список команд, зарегистрированных указанной сборкой</returns>
+		public IEnumerable<Command> GetCommandsByAssembly(IAssembly assembly)
+		{
+			foreach (var cmd in commands)
+			{
+				if (cmd.Source == assembly)
+				{
+					yield return cmd;
+				}
+			}
+		}
 
 		internal void FireCommandCalled(Command cmd, CommandCalledEventArgs args)
 		{

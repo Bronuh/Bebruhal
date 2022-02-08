@@ -1,2 +1,2 @@
 # Bebruhal
- Some really weird shit
+Некоторое реально странное дерьмо для ботоводства

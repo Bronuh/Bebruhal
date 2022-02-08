@@ -37,11 +37,13 @@ namespace Bebruhal.Types
 		public SessionInfo SessionInfo { get; internal set; } = new SessionInfo();
 
 
-		private Dictionary<string, BebrUser> _guidUsers = new Dictionary<string,BebrUser>();
-		private Dictionary<string, BebrUser> _nameUsers = new Dictionary<string, BebrUser>();
+		private Dictionary<string, BebrUser> _guidUsers = new();
+		private Dictionary<string, BebrUser> _nameUsers = new();
 
 		
-
+		/// <summary>
+		/// Пустой конструктор
+		/// </summary>
 		internal Session() { }
 
 
@@ -146,7 +148,29 @@ namespace Bebruhal.Types
 					{
 						Users.Add(user);
 						_guidUsers.Add(user.GUID, user);
-						_nameUsers.Add(user.ExternalId.ToLower(), user);
+						if(user.Name != null)
+							try
+							{
+								_nameUsers.Add(user.Name.ToLower(), user);
+							}
+							catch (Exception ex)
+							{
+								Logger.Warn($"Не удалось добавить псевдоним '{user.Name.ToLower()}' пользователя '{user.Name ?? "<безымянный>"}':" +
+									$"\n{ex.Message}");
+							}
+
+						foreach (var alias in user.GetAliases())
+						{
+							try
+							{
+								_nameUsers.Add(alias.ToLower(), user);
+							}
+							catch (Exception ex)
+							{
+								Logger.Warn($"Не удалось добавить псевдоним '{alias.ToLower()}' пользователя '{user.Name?.ToLower() ?? "<безымянный>"}':" +
+									$"\n{ex.Message}");
+							}
+						}
 						logger.Debug($"{file} успешно десериализован и добавлен в список пользователей");
 					}
 					else
@@ -168,8 +192,9 @@ namespace Bebruhal.Types
 		/// <summary>
 		/// Регистрирует нового пользователя в сессии.
 		/// </summary>
+		/// <param name="name">Имя пользователя</param>
+		/// <param name="identifier">Внешний идентификатор пользователя</param>
 		/// <param name="source">Модуль из которого производится регистрация</param>
-		/// <param name="properties">Составное свойство, которое будет назначено в качестве корневого для пользователя</param>
 		/// <param name="tags">Список тегов пользователя</param>
 		/// <returns>Зарегистрированный пользователь</returns>
 		public BebrUser RegisterUser(string name, string identifier, IModule source, IEnumerable<string>? tags)
@@ -198,6 +223,9 @@ namespace Bebruhal.Types
 				user.properties.SetCompound(source.Id, new CompoundProperty(source.Id));
 				user.Id = usersCount;
 				user.Name = name;
+				user.AddModule(source.Id);
+				if(tags != null)
+					user.AddTags(tags.ToArray());
 
 				_guidUsers.Add(user.GUID,user);
 				_nameUsers.Add(user.ExternalId.ToLower(), user);
@@ -224,7 +252,7 @@ namespace Bebruhal.Types
 			{
 				user = _nameUsers[identifier];
 			}
-			catch(Exception ex)
+			catch
 			{
 				Logger.Debug($"Не удалось найти в словаре пользователя по ключу '{identifier}'. Поиск будет продолжен перебором.");
 			}
@@ -281,8 +309,12 @@ namespace Bebruhal.Types
 		/// <summary>
 		/// Вызывается модулями, сообщая системе об окончании предварительной регистрации нового пользователя
 		/// </summary>
-		public event AsyncEventHandler<IModule, RegisteredUserEventArgs> RegisteredUser;
-		public event AsyncEventHandler<IModule, MergedUsersEventArgs> MergedUsers;
+		public event AsyncEventHandler<IModule, RegisteredUserEventArgs>? RegisteredUser;
+
+		/// <summary>
+		/// Вызывается в момент слияния пользователей
+		/// </summary>
+		public event AsyncEventHandler<IModule, MergedUsersEventArgs>? MergedUsers;
 
 	}
 }

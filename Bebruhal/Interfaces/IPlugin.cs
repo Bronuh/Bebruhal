@@ -12,19 +12,9 @@ namespace Bebruhal.Interfaces
 	public interface IPlugin : IAssembly
 	{
 		/// <summary>
-		/// Полное название плагина
-		/// </summary>
-		public string Name { get; }
-
-		/// <summary>
 		/// Описание плагина, его функционала и предназначения
 		/// </summary>
 		public string Description { get; }
-
-		/// <summary>
-		/// Идентификатор плагина. Рекомендуется использовать название плагина в kebab-case
-		/// </summary>
-		public string Id { get; }
 
 		/// <summary>
 		/// Имя/псевдоним автора плагина
@@ -39,7 +29,7 @@ namespace Bebruhal.Interfaces
 		/// <summary>
 		/// Список модулей, необходимых для работы
 		/// </summary>
-		public string[] RequiredModules { get; }
+		public string[]? RequiredModules { get; }
 
 		/// <summary>
 		/// Сразу после загрузки и регистрации всех модулей и плагинов. Эатп загрузки плагинов и разрешения зависимостей

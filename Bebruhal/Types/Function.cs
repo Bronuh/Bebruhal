@@ -8,17 +8,16 @@
 		/// <summary>
 		/// Id функции, по которому происходит поиск
 		/// </summary>
-		public string Id { get; }
+		public string? Id { get; }
 
 		/// <summary>
 		/// Описание функции
 		/// </summary>
-		public string Description { get; }
+		public string? Description { get; }
 
 		/// <summary>
 		/// Метод, реализующий требуемый функционал
 		/// </summary>
-		/// <param name="args">список параметров метода</param>
-		public Action<object[]> Run;
+		public Action<object[]>? Run;
 	}
 }

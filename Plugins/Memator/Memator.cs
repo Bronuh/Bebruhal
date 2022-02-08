@@ -15,7 +15,13 @@ namespace Memator
 
 		public string URL => "http://localhost";
 
-		public string[] RequiredModules => null;
+		public string[]? RequiredModules => null;
+
+
+		public void PreInit(BotContext context)
+		{
+
+		}
 
 		public void Init(BotContext context)
 		{
@@ -27,9 +33,5 @@ namespace Memator
 			
 		}
 
-		public void PreInit(BotContext context)
-		{
-
-		}
 	}
 }

@@ -10,41 +10,58 @@ namespace Bebruhal.Types
 	/// Действие выполняемое при использовании данной команды
 	/// </summary>
 	/// <param name="msg">Сообщение, содержащее команду</param>
+	/// <param name="ctx">Контекст работы бота</param>
 	/// <returns></returns>
 	public delegate Task CommandAction(Message msg, BotContext ctx);
+
+	/// <summary>
+	/// Класс команды. Содержит в себе поля информации о команде, делегат CommandAction, выполняющий основную работу, 
+	/// а также методы для создания новых команд. Все команды должны быть зарегистрированы в CommandsManager после завершения их создания.
+	/// </summary>
 	public class Command
 	{
 
 		private static Logger Logger { get; set; } = LogManager.GetCurrentClassLogger();
 
-		public event AsyncEventHandler<Command, CommandCalledEventArgs> Called;
-		public event AsyncEventHandler<Command, CommandExecutedEventArgs> Executed;
-		public event AsyncEventHandler<Command, CommandCancelledEventArgs> Cancelled;
+		/// <summary>
+		/// Вызывается при попытке выполнить команду
+		/// </summary>
+		public event AsyncEventHandler<Command, CommandCalledEventArgs>? Called;
+
+		/// <summary>
+		/// Вызывается в случае успешного выполения команды
+		/// </summary>
+		public event AsyncEventHandler<Command, CommandExecutedEventArgs>? Executed;
+
+		/// <summary>
+		/// Вызывается, если команда не была выполнена из-за непрохождения проверок доступа
+		/// </summary>
+		public event AsyncEventHandler<Command, CommandCancelledEventArgs>? Cancelled;
 
 		/// <summary>
 		/// Название команды. Является её основным идентификатором
 		/// </summary>
-		public string Name { get; private set; }
+		public string? Name { get; private set; }
 
 		/// <summary>
 		/// Описание предназначения и действия команды
 		/// </summary>
-		public string Description { get; private set; }
+		public string? Description { get; private set; }
 
 		/// <summary>
 		/// Название разрешения, необходимого для использования команды
 		/// </summary>
-		public string Permission { get; private set; }
+		public string? Permission { get; private set; }
 
 		/// <summary>
 		/// Строка с описанием синтаксиса использования команды
 		/// </summary>
-		public string Help { get; private set; }
+		public string? Help { get; private set; }
 
 		/// <summary>
 		/// Источник команды - плагин или модуль, добавивший команду. Устанавливается в момент регистрации.
 		/// </summary>
-		public IAssembly Source { get; internal set; }
+		public IAssembly? Source { get; internal set; }
 
 		/// <summary>
 		/// Псевдонимы команды, позволяющие её вызвать. Может использовано для назначения сокращений или переводов
@@ -55,11 +72,11 @@ namespace Bebruhal.Types
 		/// Теги команды, позволяющие рассортировать команды по функционалу. Рекомендуемые теги: admin, misc, fun, console
 		/// </summary>
 		public List<string> Tags { get; private set; } = new List<string>();
-
+		
 		/// <summary>
 		/// Выполняемое командой действие
 		/// </summary>
-		public CommandAction _action { get; private set; }
+		public CommandAction? Action { get; private set; }
 
 		/// <summary>
 		/// Ранг, требуемый для использования
@@ -76,6 +93,9 @@ namespace Bebruhal.Types
 		/// </summary>
 		public bool ConsoleOnly { get; private set; } = false;
 
+		/// <summary>
+		/// Пустой конструктор
+		/// </summary>
 		public Command() { }
 
 		/// <summary>
@@ -86,7 +106,7 @@ namespace Bebruhal.Types
 		public Command(string name, CommandAction action)
 		{
 			Name = name;
-			_action = action;
+			Action = action;
 		}
 
 		/// <summary>
@@ -144,7 +164,7 @@ namespace Bebruhal.Types
 		/// <summary>
 		/// Добавляет теги команде
 		/// </summary>
-		/// <param name="tag">название тега</param>
+		/// <param name="tags">Теги</param>
 		/// <returns>Текущая команда</returns>
 		public Command AddTags(params string[] tags)
 		{
@@ -252,7 +272,7 @@ namespace Bebruhal.Types
 		{
 			string command = text.Split(' ')[0];
 
-			if (command.ToLower() == Name.ToLower())
+			if (Name != null && Name.Trim() != String.Empty && command.ToLower() == Name.ToLower())
 			{
 				return true;
 			}
@@ -286,10 +306,16 @@ namespace Bebruhal.Types
 			LoggerProxy.Debug($"Попытка выполнения команды {context.Core.GetPrefix()}{Name} ({text})");
 			if (CheckCommand(text))
 			{
+				context.CommandsManager.FireCommandCalled(this, new CommandCalledEventArgs(message));
+				Called?.Invoke(this, new CommandCalledEventArgs(message));
+				LoggerProxy.Debug("Обнаружена команда " + Name);
+
 				if (!message.Author.IsConsole() && ConsoleOnly)
 				{
 					Logger.Warn($"Попытка выполнить команду только для консоли из внешнего модуля");
 					message.Respond($"Харошоя попытка, {message.Author.Name}, но команда только для консолей");
+					context.CommandsManager.FireCommandCancelled(this, new CommandCancelledEventArgs(message));
+					Cancelled?.Invoke(this, new CommandCancelledEventArgs(message));
 					return;
 				}
 
@@ -297,6 +323,8 @@ namespace Bebruhal.Types
 				{
 					Logger.Warn($"Попытка выполнить команду только для администраторов");
 					message.Respond($"Харошоя попытка, {message.Author.Name}, но команда только для админов");
+					context.CommandsManager.FireCommandCancelled(this, new CommandCancelledEventArgs(message));
+					Cancelled?.Invoke(this, new CommandCancelledEventArgs(message));
 					return;
 				}
 
@@ -304,17 +332,21 @@ namespace Bebruhal.Types
 				{
 					Logger.Warn($"Попытка выполнить команду {Rank} ранга пользователем {message.Author.Rank} ранга");
 					message.Respond($"Харошоя попытка, {message.Author.Name}, но тебе стоит дорасти до {Rank} ранга");
+					context.CommandsManager.FireCommandCancelled(this, new CommandCancelledEventArgs(message));
+					Cancelled?.Invoke(this, new CommandCancelledEventArgs(message));
 					return;
 				}
 
-
-				LoggerProxy.Debug("Обнаружена команда " + Name);
-				context.CommandsManager.FireCommandCalled(this, new CommandCalledEventArgs());
-				Called?.Invoke(this, new CommandCalledEventArgs());
-
 				context.CommandsManager.FireCommandExecuted(this, new CommandExecutedEventArgs(message));
 				Executed?.Invoke(this, new CommandExecutedEventArgs(message));
-				await _action(message, context);
+				if (Action != null)
+				{
+					await Action(message, context);
+				}
+				else
+				{
+					Logger.Warn($"Команда {Name ?? "<безымянная>"} не содержит делегата действия. Пропущено.");
+				}
 			}
 		}
 	}
