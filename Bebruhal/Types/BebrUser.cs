@@ -80,6 +80,8 @@
 		[JsonProperty]
 		internal CompoundProperty properties = new();
 
+		[JsonIgnore]
+		private List<string> tempAliases = new();
 
 		private bool isEmpty = false;
 		/// <summary>
@@ -208,6 +210,18 @@
 		}
 
 		/// <summary>
+		/// Добавляет временный псевдоним пользователю. Псевдоним не сохраняется и спрасывается после перезапуска.
+		/// </summary>
+		/// <param name="alias">Псевдоним</param>
+		public void AddTempAlias(string alias)
+		{
+			if (!tempAliases.Contains(alias.ToLower()))
+			{
+				tempAliases.Add(alias.ToLower());
+			}
+		}
+
+		/// <summary>
 		/// Добавляет несколько псевдонимов пользователю
 		/// </summary>
 		/// <param name="aliases">Список псевдонимов</param>
@@ -240,19 +254,29 @@
 			else if (key.Length>2)
 			{
 				try { if (Name.ToLower().Contains(key)) return true; } catch { }
-			}
-			else
-			{
+
 				LoggerProxy.Debug("Имя пользователя не найдено, поиск псевдонимов");
-				foreach (string alias in aliases)
+				if (key.Length > 2)
 				{
-					LoggerProxy.Debug("Псевдоним: " + alias);
-					if (key.Length > 2)
+					foreach (string alias in aliases)
 					{
+						LoggerProxy.Debug("Псевдоним: " + alias);
+
 						try { if (alias.ToLower().Contains(key)) return true; } catch { }
+
+
+					}
+
+					foreach (string alias in tempAliases)
+					{
+						LoggerProxy.Debug("Временный псевдоном: " + alias);
+
+						try { if (alias.ToLower().Contains(key)) return true; } catch { }
+
 
 					}
 				}
+
 			}
 			return false;
 		}

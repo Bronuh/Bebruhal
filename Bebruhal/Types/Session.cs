@@ -245,7 +245,6 @@ namespace Bebruhal.Types
 		/// <returns>Зарегистрированный пользователь</returns>
 		public BebrUser RegisterUser(string name, string identifier, IModule source, IEnumerable<string>? tags)
 		{
-			logger.Info("Попытка зарегистрировать нового пользователя...");
 
 			var user = GetUser(name);
 			if (!user.IsEmpty())
@@ -291,6 +290,8 @@ namespace Bebruhal.Types
 				Users.Add(user);
 				usersCount++;
 				Save();
+
+				logger.Info($"Зарегистрирован новый пользователь {user.Name} из {source.Id}");
 			}
 			RegisteredUser?.Invoke(source, new RegisteredUserEventArgs(user));
 			return user;

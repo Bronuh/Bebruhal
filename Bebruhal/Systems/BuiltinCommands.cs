@@ -121,9 +121,38 @@ namespace Bebruhal.Systems
 					msg.Respond($"Ошибка при выполнении команды 'unalias': {ex.Message}");
 				}
 			})
-				.SetHelp("команда цель новый_псевдоним")
+				.SetHelp("команда псевдоним")
 				.SetDescription("Добавляет псевдоним пользователю")
 				.AddAliases("забудь", "forget");
+			commands.Add(cmd);
+
+
+			cmd = new Command("about", async (msg, ctx) =>
+			{
+				var parts = msg.GetTextWithoutCommand().Split(' ');
+				var respond = "";
+
+				try
+				{
+					var targetKey = parts[0];
+					var user = ctx.Session.GetUser(targetKey);
+					if (user.IsEmpty())
+					{
+						msg.Respond($"Не удалось найти пользователя по ключу '{targetKey}'");
+						return;
+					}
+
+					ctx.Session.RemoveAliases(targetKey);
+					msg.Respond($"Забыл псевдоним пользователя: {user.Name}");
+				}
+				catch (Exception ex)
+				{
+					msg.Respond($"Ошибка при выполнении команды 'about': {ex.Message}");
+				}
+			})
+				.SetHelp("команда цель")
+				.SetDescription("Выводит информацию о пользователе")
+				.AddAliases("кто", "who", "whois");
 			commands.Add(cmd);
 
 

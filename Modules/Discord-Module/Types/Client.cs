@@ -126,13 +126,14 @@ namespace Discord_Module.Types
 			DiscordModule.Instance.Restart();
 		}
 
-		private static void PreregistrateUsers(IEnumerable<DiscordUser> users)
+		private static void PreregistrateUsers(IEnumerable<DiscordMember> users)
 		{
 			foreach(var user in users)
 			{
 				try
 				{
-					Session.RegisterUser(user.Username, user.Id.ToString(), DiscordModule.Instance, null);
+					var bebrUser = Session.RegisterUser(user.Username, user.Id.ToString(), DiscordModule.Instance, null);
+					bebrUser.AddTempAlias(user.DisplayName);
 				}
 				catch (Exception ex)
 				{
@@ -219,6 +220,8 @@ namespace Discord_Module.Types
 				user = Session.RegisterUser(e.Message.Author.Username, e.Message.Author.Id.ToString(), DiscordModule.Instance, null);
 				Session.AddAliases(user, e.Author.Username);
 			}
+
+			user.AddTempAlias((await e.Guild.GetMemberAsync(e.Author.Id)).DisplayName);
 
 			Message msg = new Message();
 			msg.Author = user;
