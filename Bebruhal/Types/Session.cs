@@ -43,12 +43,27 @@ namespace Bebruhal.Types
 
 		private void CacheUser(BebrUser user)
 		{
-			try{_guidUsers.Add(user.GUID,user);}catch (Exception) { }
-			try { _nameUsers.Add(user.Name.ToLower(), user); } catch (Exception) { }
-			try { _idUsers.Add(user.ExternalId.ToLower(), user); } catch (Exception) { }
-			foreach (var alias in user.GetAliases())
+			try
 			{
-				_nameUsers.Add(alias.ToLower(), user);
+				try { _guidUsers.Add(user.GUID, user); } catch (Exception ex) { throw; }
+				try { _nameUsers.Add(user.Name.ToLower(), user); } catch (Exception ex) { throw; }
+				try { _idUsers.Add(user.ExternalId.ToLower(), user); } catch (Exception ex) { throw; }
+
+				foreach (var alias in user.GetAliases())
+				{
+					try
+					{
+						_nameUsers.Add(alias.ToLower(), user);
+					}
+					catch (Exception ex)
+					{
+						throw;
+					}
+				}
+			}
+			catch (Exception ex)
+			{
+				logger.Debug(ex.Message);
 			}
 		}
 
@@ -290,10 +305,20 @@ namespace Bebruhal.Types
 		public BebrUser GetUser(string identifier)
 		{
 			var user = BebrUser.Empty;
-			var key = identifier.ToLower();
+			var key = identifier.ToLower(); 
+			try
+			{
+				user = _guidUsers[key];
+				return user;
+			}
+			catch
+			{
+				Logger.Debug($"Не удалось найти в словаре пользователя по GUID '{identifier}'.");
+			}
 			try
 			{
 				user = _nameUsers[key];
+				return user;
 			}
 			catch
 			{
@@ -302,6 +327,7 @@ namespace Bebruhal.Types
 			try
 			{
 				user = _idUsers[key];
+				return user;
 			}
 			catch
 			{

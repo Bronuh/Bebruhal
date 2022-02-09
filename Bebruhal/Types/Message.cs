@@ -1,5 +1,13 @@
-﻿namespace Bebruhal.Types
+﻿using System.Text.RegularExpressions;
+namespace Bebruhal.Types
 {
+	/// <summary>
+	/// Для использования внутри модулей. Заменяет все упоминания на свои собственные
+	/// </summary>
+	/// <param name="parsedGuid">GUID обнаруженного пользователя</param>
+	/// <returns>Строка - упоминание</returns>
+	public delegate string MentionReplacer(BebrUser user);
+
 	public class Message
 	{
 		/// <summary>
@@ -46,6 +54,9 @@
 		/// Дополнительная краткая информация о сообщении. Может включать источник и внутреннее имя пользователя.
 		/// </summary>
 		public string Info { get; set; }
+
+
+		private Logger logger = LoggerProxy.Instance();
 
 
 		/// <summary>
@@ -132,6 +143,25 @@
 		private bool IsRespondable()
 		{
 			return Source != null && Source != String.Empty;
+		}
+
+
+		public string ReplaceMentions(MentionReplacer replacer)
+		{
+			MatchCollection matches = Constants.mentionRegex.Matches(Text);
+			string replaced = Text;
+			logger.Debug($"Найдено {matches.Count} совпадений");
+			foreach (Match match in matches)
+			{
+				var fullMatch = match.Value;
+				var guid = match.Groups[2].Value;
+
+
+				logger.Debug($"fullMatch: {fullMatch}\nguid:{guid}");
+				replaced = replaced.Replace(fullMatch, replacer(Bebruhal.GetCore().Session.GetUser(guid)));
+			}
+
+			return replaced;
 		}
 	}
 }

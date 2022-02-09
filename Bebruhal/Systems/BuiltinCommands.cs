@@ -87,6 +87,7 @@ namespace Bebruhal.Systems
 					}
 
 					ctx.Session.AddAliases(user,newAlias);
+					msg.Respond($"Запомнил: {user.Name} = {newAlias}");
 				}
 				catch (Exception ex)
 				{
@@ -105,7 +106,6 @@ namespace Bebruhal.Systems
 				try
 				{
 					var targetKey = parts[0];
-					var newAlias = parts[1];
 					var user = ctx.Session.GetUser(targetKey);
 					if (user.IsEmpty())
 					{
@@ -113,11 +113,12 @@ namespace Bebruhal.Systems
 						return;
 					}
 
-					ctx.Session.AddAliases(user, newAlias);
+					ctx.Session.RemoveAliases(targetKey);
+					msg.Respond($"Забыл псевдоним пользователя: {user.Name}");
 				}
 				catch (Exception ex)
 				{
-					msg.Respond($"Ошибка при выполнении команды 'alias': {ex.Message}");
+					msg.Respond($"Ошибка при выполнении команды 'unalias': {ex.Message}");
 				}
 			})
 				.SetHelp("команда цель новый_псевдоним")

@@ -187,6 +187,15 @@
 		}
 
 		/// <summary>
+		/// Формирует внутренний код обращения к этому пользователю
+		/// </summary>
+		/// <returns>Обращение к пользователю</returns>
+		public string GetMention()
+		{
+			return $"<@{GUID}>";
+		}
+
+		/// <summary>
 		/// Добавляет псевдоним пользователю
 		/// </summary>
 		/// <param name="alias">Псевдоним</param>
@@ -231,7 +240,6 @@
 			else if (key.Length>2)
 			{
 				try { if (Name.ToLower().Contains(key)) return true; } catch { }
-				
 			}
 			else
 			{

@@ -58,6 +58,8 @@ namespace Bebruhal
 			context.ModulesManager = ModulesManager;
 			context.CommandsManager = CommandsManager;
 			context.PluginsManager = PluginsManager;
+			context.Config = config;
+			context.Core = this;
 			InterfaceExecutor.Execute(typeof(IInitializable),"Initialize");
 
 			PreInit();
@@ -120,7 +122,7 @@ namespace Bebruhal
 		public async Task ProcessMessage(Message message)
 		{
 			logger.Info($"[{message.Module?.Name}]({message.Info}): {message.Text}");
-			RecievedMessage?.Invoke(message.Module, new RecievedMessageEventArgs(message,message.Author));
+			RecievedMessage?.Invoke(message.Module, new ReceivedMessageEventArgs(message,message.Author));
 			await CommandsManager.TryExecute(message);
 		}
 
@@ -129,7 +131,7 @@ namespace Bebruhal
 		/// Вызывается модулями для передачи информации о полученном сообщении в бота. Считывается плагинами и
 		/// менеджером команд для обработки.
 		/// </summary>
-		public event AsyncEventHandler<IModule?, RecievedMessageEventArgs> RecievedMessage;
+		public event AsyncEventHandler<IModule?, ReceivedMessageEventArgs> RecievedMessage;
 
 		
 	}

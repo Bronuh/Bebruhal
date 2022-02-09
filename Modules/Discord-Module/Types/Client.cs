@@ -186,8 +186,10 @@ namespace Discord_Module.Types
 				}
 			}
 
+			var text = msg.ReplaceMentions((user) => { return $"<@!{user.ExternalId}>"; });
+
 			DiscordMessageBuilder builder = new DiscordMessageBuilder();
-			builder.WithContent(msg.Text)
+			builder.WithContent(text)
 				.WithFiles(files);
 
 			try

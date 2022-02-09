@@ -35,7 +35,7 @@ namespace Bebruhal.Types
 	/// <summary>
 	/// Содержит данные события, вызываемого при передаче сообщения из модуля в ядро
 	/// </summary>
-	public class RecievedMessageEventArgs : AsyncEventArgs
+	public class ReceivedMessageEventArgs : AsyncEventArgs
 	{
 		/// <summary>
 		/// Полученное сообщение
@@ -53,7 +53,7 @@ namespace Bebruhal.Types
 		/// </summary>
 		/// <param name="msg">Принятое сообщение</param>
 		/// <param name="author">Автор сообщения</param>
-		public RecievedMessageEventArgs(Message msg, BebrUser author)
+		public ReceivedMessageEventArgs(Message msg, BebrUser author)
 		{
 			Message = msg;
 			this.Author = author;
