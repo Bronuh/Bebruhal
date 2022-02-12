@@ -1,0 +1,11 @@
+﻿global using System;
+global using System.Collections.Generic;
+global using System.Linq;
+global using System.Threading.Tasks;
+global using Bebruhal.Utils;
+global using Bebruhal.Types;
+global using Bebruhal.Systems;
+global using Bebruhal.Interfaces;
+global using Newtonsoft.Json;
+global using SixLabors.ImageSharp;
+global using NLog;
