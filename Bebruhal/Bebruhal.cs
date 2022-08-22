@@ -32,7 +32,6 @@ public class Bebruhal
 		LoggerProxy.Trace("Pre-core-start");
 		Task.Factory.StartNew(() => core.Start());
 		logger.Debug("Started new core task");
-
 		StartConsole();
 	}
 
@@ -65,9 +64,13 @@ public class Bebruhal
 	/// </summary>
 	public static void ShutDown()
 	{
+		logger.Info($"Завершение работы бота...");
 		running = false;
+		logger.Info($"Сохранение сессии...");
 		core.Session.Save();
+		logger.Info($"Сохранение плагинов...");
 		core.PluginsManager.SaveAll();
+		logger.Info($"Сохранение модулей...");
 		core.ModulesManager.SaveAll();
 	}
 

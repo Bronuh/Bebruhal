@@ -41,22 +41,22 @@ namespace Bebruhal.Types
 		/// <summary>
 		/// Название команды. Является её основным идентификатором
 		/// </summary>
-		public string? Name { get; private set; }
+		public string? Name { get; protected set; }
 
 		/// <summary>
 		/// Описание предназначения и действия команды
 		/// </summary>
-		public string? Description { get; private set; }
+		public string? Description { get; protected set; }
 
 		/// <summary>
 		/// Название разрешения, необходимого для использования команды
 		/// </summary>
-		public string? Permission { get; private set; }
+		public string? Permission { get; protected set; }
 
 		/// <summary>
 		/// Строка с описанием синтаксиса использования команды
 		/// </summary>
-		public string? Help { get; private set; }
+		public string? Help { get; protected set; }
 
 		/// <summary>
 		/// Источник команды - плагин или модуль, добавивший команду. Устанавливается в момент регистрации.
@@ -66,32 +66,32 @@ namespace Bebruhal.Types
 		/// <summary>
 		/// Псевдонимы команды, позволяющие её вызвать. Может использовано для назначения сокращений или переводов
 		/// </summary>
-		public List<string> Aliases { get; private set; } = new List<string>();
+		public List<string> Aliases { get; protected set; } = new List<string>();
 
 		/// <summary>
 		/// Теги команды, позволяющие рассортировать команды по функционалу. Рекомендуемые теги: admin, misc, fun, console
 		/// </summary>
-		public List<string> Tags { get; private set; } = new List<string>();
+		public List<string> Tags { get; protected set; } = new List<string>();
 		
 		/// <summary>
 		/// Выполняемое командой действие
 		/// </summary>
-		public CommandAction? Action { get; private set; }
+		public CommandAction? Action { get; protected set; }
 
 		/// <summary>
 		/// Ранг, требуемый для использования
 		/// </summary>
-		public int Rank { get; private set; } = 0;
+		public int Rank { get; protected set; } = 0;
 
 		/// <summary>
 		/// Доступна ли эта команда только операторам
 		/// </summary>
-		public bool OpOnly { get; private set; } = false;
+		public bool OpOnly { get; protected set; } = false;
 
 		/// <summary>
 		/// Доступна ли эта команда только консолям
 		/// </summary>
-		public bool ConsoleOnly { get; private set; } = false;
+		public bool ConsoleOnly { get; protected set; } = false;
 
 		/// <summary>
 		/// Пустой конструктор
@@ -302,6 +302,8 @@ namespace Bebruhal.Types
 			string text = message.Text;
 			BebrUser author = message.Author;
 			text = text.Substring(context.Core.GetPrefix().Length, text.Length - (context.Core.GetPrefix().Length));
+
+
 
 			LoggerProxy.Debug($"Попытка выполнения команды {context.Core.GetPrefix()}{Name} ({text})");
 			if (CheckCommand(text))

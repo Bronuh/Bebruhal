@@ -258,7 +258,7 @@ namespace Discord_Module.Types
 				foreach (var guild in CustomGuilds)
 				{
 					Logger.Debug($"Попытка отправки сообщения в {guild.BotChannel.Name}");
-					await guild.BotChannel.SendMessageAsync("Бебр запущен");
+					// await guild.BotChannel.SendMessageAsync("Бебр запущен");
 					var chans = await guild.GetChannelsAsync();
 					foreach (var channel in chans)
 					{

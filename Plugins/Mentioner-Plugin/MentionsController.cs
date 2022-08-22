@@ -31,7 +31,7 @@ namespace Mentioner_Plugin
 								var clearText = mention.GetClearText(word);
 								if (clearText.Length >= 3)
 								{
-									BebrUser target = MentionerPlugin.Context.Session.GetUser(clearText);
+									BebrUser target = MentionerPlugin.Context.Session.GetUser(clearText, module.Id);
 									if (!target.IsEmpty())
 									{
 										msg += mention.Message.Replace("%MENTION%", target.GetMention()) + "\n";

@@ -17,8 +17,9 @@ namespace Bebruhal.Systems
 			{
 				Bebruhal.ShutDown();
 			})
-				.SetConsole(true)
-				.AddAliases("exit","shutdown");
+				.SetConsole(false)
+				.SetOp(true)
+				.AddAliases("exit","shutdown","kill");
 			commands.Add(cmd);
 
 
@@ -142,17 +143,70 @@ namespace Bebruhal.Systems
 						return;
 					}
 
-					ctx.Session.RemoveAliases(targetKey);
-					msg.Respond($"Забыл псевдоним пользователя: {user.Name}");
+					//ctx.Session.RemoveAliases(targetKey);
+					//msg.Respond($"Забыл псевдоним пользователя: {user.Name}");
 				}
 				catch (Exception ex)
 				{
 					msg.Respond($"Ошибка при выполнении команды 'about': {ex.Message}");
 				}
 			})
-				.SetHelp("команда цель")
-				.SetDescription("Выводит информацию о пользователе")
-				.AddAliases("кто", "who", "whois");
+			.SetHelp("команда цель")
+			.SetDescription("Выводит информацию о пользователе")
+			.AddAliases("кто", "who", "whois");
+			commands.Add(cmd);
+
+
+			cmd = new Command("help", async (msg, ctx) =>
+			{
+				msg.Respond($"Помащь!\n" +
+					$"Используй !help, чтобы еще разок посмотреть на этот великолепный текст\n" +
+					$"Используй !commands, чтобы посмотреть список всех доступных комманд\n" +
+					$"Ну и в общем то всё...");
+			})
+			.SetHelp("команда")
+			.SetDescription("Показывает основную информацию о боте")
+			.AddAliases("помощь", "man");
+			commands.Add(cmd);
+
+
+			cmd = new Command("commands", async (msg, ctx) =>
+			{
+				string respond = "Список команд: ";
+				List<string> lines = new();
+				foreach (var command in ctx.CommandsManager.GetCommands())
+				{
+					string commandInfo = "";
+
+					string commandPerm = (command.ConsoleOnly) ? "(CONSOLE) " : (command.OpOnly) ? "(OP) " : "";
+					string commandName = ctx.Config.CommandPrefix + command.Name + " - ";
+					string commandDesc = command.Description+".";
+					string commandAliases = $"Альтернативы: {command.Aliases.ToLine()}.";
+					string commandSource = $"Источник: {((command.Source is null) ? "CORE" : command.Source.Name)}";
+
+					commandInfo = $"{commandPerm}{commandName}{commandDesc} {commandAliases} {commandSource}";
+					lines.Add(commandInfo);
+				}
+				int linesPerMessage = 5;
+
+				int linesCounter = 0;
+				string text = "";
+				foreach (var line in lines)
+				{
+					text += line+"\n";
+					linesCounter++;
+					if(linesCounter >= linesPerMessage)
+					{
+						msg.Respond(text);
+						text = "";
+						linesCounter = 0;
+					}
+				}
+				msg.Respond(text);
+			})
+			.SetHelp("команда")
+			.SetDescription("Выводит список команд")
+			.AddAliases("команды");
 			commands.Add(cmd);
 
 

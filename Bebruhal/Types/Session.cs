@@ -246,18 +246,24 @@ namespace Bebruhal.Types
 		public BebrUser RegisterUser(string name, string identifier, IModule source, IEnumerable<string>? tags)
 		{
 
-			var user = GetUser(name);
+			var user = GetUser(name, source.Id);
 			if (!user.IsEmpty())
 			{
-				logger.Debug($"Пользователь {user.Name} уже зарегистрирован");
-				return user;
+				if (user.Source==source.Id)
+				{
+					logger.Debug($"Пользователь {user.Name} уже зарегистрирован");
+					return user;
+				}
 			}
 
-			user = GetUser(identifier);
+			user = GetUser(identifier, source.Id);
 			if (!user.IsEmpty())
 			{
-				logger.Debug($"Пользователь {user.ExternalId} уже зарегистрирован");
-				return user;
+				if (user.Source == source.Id)
+				{
+					logger.Debug($"Пользователь {user.ExternalId} уже зарегистрирован");
+					return user;
+				}
 			}
 
 			try
@@ -303,7 +309,7 @@ namespace Bebruhal.Types
 		/// </summary>
 		/// <param name="identifier">Строка для поиска - имя, псевдоним, id или GUID</param>
 		/// <returns>Найденный пользователь, либо BebrUser.Empty</returns>
-		public BebrUser GetUser(string identifier)
+		public BebrUser GetUser(string identifier, string? moduleId)
 		{
 			var user = BebrUser.Empty;
 			var key = identifier.ToLower(); 

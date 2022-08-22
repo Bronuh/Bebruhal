@@ -43,6 +43,17 @@ namespace Bebruhal.Utils
 		}
 
 		/// <summary>
+		/// Возвращает случайный элемент списка
+		/// </summary>
+		/// <typeparam name="T">Тип хранимых значений в списке</typeparam>
+		/// <param name="list">Список</param>
+		/// <returns>Случайный элемент списка <paramref name="list"/></returns>
+		public static T GetRandom<T>(this IEnumerable<T> list)
+		{
+			return list.ElementAt(new Random().Next(0, list.Count()));
+		}
+
+		/// <summary>
 		/// Разбивает перечисление на куски размером chunkSize
 		/// </summary>
 		/// <typeparam name="T">Тип хранимых значений в списке</typeparam>

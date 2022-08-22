@@ -89,7 +89,7 @@ namespace Discord_Module
 
 		public void Broadcast(Message message)
 		{
-
+			Logger.Warn($"Широковещательные сообщения в {Id} ещё не реализованы");
 		}
 	}
 }
